@@ -1,0 +1,73 @@
+---
+# Include generate_ssl_key.yml tasks if generate_ssl_key is true
+- name: Generate SSL keys
+  delegate_to: localhost
+  include_tasks: generate_ssl_key.yml
+  tags: [generate_ssl_key]
+
+# Include generate_ssl_key.yml tasks if generate_ssl_key is true
+- name: Encrypt ZFS key
+  delegate_to: localhost
+  include_tasks: generate_encrypted_key.yml
+  tags: [generate_encrypted_key]
+
+# Ensure pip is installed with apt
+- name: Ensure pip is installed with apt
+  ansible.builtin.apt:
+    name: python3-pip
+    state: present
+    update_cache: yes
+
+# Install the required Python packages
+- name: Install required Python packages
+  ansible.builtin.pip:
+    name:
+      - vzekeyprovider
+    state: present
+
+# Install vzekeyprovider service template
+- name: Install vzekeyprovider service template
+  ansible.builtin.template:
+    src: vzekeyprovider.service.j2
+    dest: /etc/systemd/system/vzekeyprovider.service
+
+# Reload systemd daemon
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+# Enable and start vzkeyprovider
+- name: Restart vzekeyprovider
+  systemd:
+    name: vzekeyprovider
+    state: restarted
+    enabled: yes
+
+# Upload the encrypted key to the vzekeyprovider service
+- name: Post request to vzekeyprovider service
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}:{{ vzekeyprovider.port }}/set_password"
+    method: POST
+    body: "user_input={{ lookup('file', 'encrypted.b64') | urlencode }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+  tags: [upload_encrypted_key]
+
+# Install zfs-load-key service template
+- name: Install zfs-load-key service template
+  ansible.builtin.template:
+    src: zfs-load-key.service.j2
+    dest: /etc/systemd/system/zfs-load-key.service
+  notify:
+    - Reload systemd daemon
+    - Enable zfs-load-key
+  when: vzekey_primary == True
+
+- name: Upload private ssl key if primary
+  ansible.builtin.copy:
+    src: "{{ vzekeyprovider.private_local_ssl_path }}"
+    dest: "{{ vzekeyprovider.private_ssl_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: vzekey_primary == True

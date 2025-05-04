@@ -1,0 +1,4 @@
+- name: Enable zfs-load-key
+  systemd:
+    name: zfs-load-key
+    enabled: yes

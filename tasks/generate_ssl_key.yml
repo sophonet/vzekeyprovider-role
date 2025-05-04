@@ -1,0 +1,23 @@
+---
+# Abort if private_local_ssl_path exists
+- name: Check if SSL paths exist
+  vars:
+    ssl_paths:
+      - "{{ vzekeyprovider.private_local_ssl_path }}"
+      - "{{ vzekeyprovider.private_public_ssl_path }}"
+  ansible.builtin.block:
+    - name: Check if path exists
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: ssl_path_stat
+      loop: "{{ ssl_paths }}"
+
+    - name: Fail if any SSL path exists
+      ansible.builtin.fail:
+        msg: "The SSL key already exists at {{ item }}. Aborting to prevent overwriting."
+      when: ssl_path_stat.results | selectattr('stat.exists', 'eq', True) | list | length > 0
+
+- name: Generate ssl key
+  shell: |
+    openssl genpkey -algorithm RSA -out {{ vzekeyprovider.private_local_ssl_path }}
+    openssl rsa -pubout -in {{ vzekeyprovider.private_local_ssl_path }} -out {{ vzekeyprovider.private_public_ssl_path }}

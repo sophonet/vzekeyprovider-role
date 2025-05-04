@@ -1,0 +1,8 @@
+---
+vzekeyprovider:
+  key_path: "/dev/shm/zfspwd"
+  private_ssl_path: "/etc/ssl/private/private_key.pem"
+  private_local_ssl_path: "private_key.pem"
+  private_public_ssl_path: "public_key.pem"
+  generate_ssl_key: true
+  zfs_key: "asd98f732234"

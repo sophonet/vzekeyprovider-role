@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Fabian Wenzel
+  description: An Ansible role for providing encrypted zfs keys during boot
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - bionic
+        - focal
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+  dependencies: []
+
+dependencies: []

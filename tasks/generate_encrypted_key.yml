@@ -1,0 +1,26 @@
+---
+- name: Check if SSL paths exist
+  delegate_to: localhost
+  vars:
+    ssl_paths:
+      - "{{ vzekeyprovider.private_local_ssl_path }}"
+      - "{{ vzekeyprovider.private_public_ssl_path }}"
+  ansible.builtin.block:
+    - name: Check if path exists
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: ssl_path_stat
+      loop: "{{ ssl_paths }}"
+
+    - name: Fail if any SSL path does not exist
+      ansible.builtin.fail:
+      msg: "The SSL key does not exist at {{ item }}. Aborting as it is required."
+      when: ssl_path_stat.results | selectattr('stat.exists', 'eq', False) | list | length > 0
+
+- name: Encrypt zfs key with public SSL key
+  delegate_to: localhost
+  shell: |
+    echo {{ vzekeyprovider.zfs_key }} | openssl pkeyutl -encrypt -pubin -inkey {{ vzekeyprovider.private_public_ssl_path }} -out encrypted.bin
+    base64 encrypted.bin > encrypted.b64
+  args:
+    creates: encrypted.b64
