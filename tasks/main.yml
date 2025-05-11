@@ -22,31 +22,31 @@
 - name: Install required Python packages
   ansible.builtin.pip:
     name:
-      - vzekeyprovider
+      - zfskeyprovider
     state: present
 
-# Install vzekeyprovider service template
-- name: Install vzekeyprovider service template
+# Install zfskeyprovider service template
+- name: Install zfskeyprovider service template
   ansible.builtin.template:
-    src: vzekeyprovider.service.j2
-    dest: /etc/systemd/system/vzekeyprovider.service
+    src: zfskeyprovider.service.j2
+    dest: /etc/systemd/system/zfskeyprovider.service
 
 # Reload systemd daemon
 - name: Reload systemd daemon
   systemd:
     daemon_reload: yes
 
-# Enable and start vzkeyprovider
-- name: Restart vzekeyprovider
+# Enable and start zfskeyprovider
+- name: Restart zfskeyprovider
   systemd:
-    name: vzekeyprovider
+    name: zfskeyprovider
     state: restarted
     enabled: yes
 
-# Upload the encrypted key to the vzekeyprovider service
-- name: Post request to vzekeyprovider service
+# Upload the encrypted key to the zfskeyprovider service
+- name: Post request to zfskeyprovider service
   ansible.builtin.uri:
-    url: "http://{{ ansible_host }}:{{ vzekeyprovider.port }}/set_password"
+    url: "http://{{ ansible_host }}:{{ zfskeyprovider.port }}/set_password"
     method: POST
     body: "user_input={{ lookup('file', 'encrypted.b64') | urlencode }}"
     headers:
@@ -65,8 +65,8 @@
 
 - name: Upload private ssl key if primary
   ansible.builtin.copy:
-    src: "{{ vzekeyprovider.private_local_ssl_path }}"
-    dest: "{{ vzekeyprovider.private_ssl_path }}"
+    src: "{{ zfskeyprovider.private_local_ssl_path }}"
+    dest: "{{ zfskeyprovider.private_ssl_path }}"
     owner: root
     group: root
     mode: '0600'
