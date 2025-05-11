@@ -61,7 +61,7 @@
   notify:
     - Reload systemd daemon
     - Enable zfs-load-key
-  when: vzekey_primary == True
+  when: zfs_server == True
 
 - name: Upload private ssl key if primary
   ansible.builtin.copy:
@@ -70,4 +70,4 @@
     owner: root
     group: root
     mode: '0600'
-  when: vzekey_primary == True
+  when: zfs_server == True
